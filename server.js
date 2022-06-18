@@ -115,6 +115,6 @@ db.initialize(dbName, collectionName2, function(dbCollection) { // successCallba
 
 
 
-server.listen(port, () => {
+server.listen(process.env.PORT || 3000, () => {
     console.log(`Server listening at ${port}`);
 });
