@@ -46,6 +46,14 @@ db.initialize(dbName, collectionName, function(dbCollection) { // successCallbac
 		});
 	});
 
+	server.get("/items", (request, response) => {
+		// return updated list
+		dbCollection.find().toArray((error, result) => {
+			if (error) throw error;
+			response.json(result);
+		});
+	});
+
 	server.get("/items/:id", (request, response) => {
 		const itemId = request.params.id;
 	
@@ -91,6 +99,14 @@ db.initialize(dbName, collectionName2, function(dbCollection) { // successCallba
 				if (_error) throw _error;
 				response.json(_result);
 			});
+		});
+	});
+
+	server.get("/state", (request, response) => {
+		// return updated list
+		dbCollection.find().toArray((error, result) => {
+			if (error) throw error;
+			response.json(result);
 		});
 	});
 
