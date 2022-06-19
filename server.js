@@ -107,6 +107,18 @@ db.initialize(dbName, collectionName2, function(dbCollection) { // successCallba
 	// << db CRUD routes >>
 	server.post("/state", (request, response) => {
 		const item = request.body;
+
+		const itemId = parseInt(request.body.id);
+		console.log("POST state scrip  id: ", typeof itemId);
+		dbCollection.deleteOne({ id: itemId }, function(error, result) {
+			if (error) throw error;
+			// send back entire updated list after successful request
+			dbCollection.find().toArray(function(_error, _result) {
+				if (_error) throw _error;
+				// response.json(_result);
+			});
+		});
+
 		dbCollection.insertOne(item, (error, result) => { // callback of insertOne
 			if (error) throw error;
 			// return updated list
