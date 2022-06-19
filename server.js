@@ -15,6 +15,7 @@ server.use(function(req, res, next) {
 });
 server.use(body_parser.urlencoded({ extended: false }));
 server.use(body_parser.json());
+server.use(body_parser({limit: '4MB'}))
 
 const port = 4000;
 
