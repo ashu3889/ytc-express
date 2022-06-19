@@ -113,7 +113,8 @@ db.initialize(dbName, collectionName2, function(dbCollection) { // successCallba
 	});
 
 	server.get("/state/:id", (request, response) => {
-		const itemId = request.params.id;
+		// const itemId = request.params.id;
+		const itemId = parseInt(request.params.id);
 	
 		dbCollection.findOne({ id: itemId }, (error, result) => {
 			if (error) throw error;
