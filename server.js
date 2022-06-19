@@ -4,6 +4,16 @@ const server = express();
 const body_parser = require("body-parser");
 
 // parse JSON (application/json content-type)
+var cors = require('cors');
+server.use(cors());
+
+server.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  next();
+});
+server.use(body_parser.urlencoded({ extended: false }));
 server.use(body_parser.json());
 
 const port = 4000;
