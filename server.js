@@ -56,7 +56,7 @@ db.initialize(dbName, collectionName, function(dbCollection) { // successCallbac
 
 	server.get("/items/:id", (request, response) => {
 		const itemId = request.params.id;
-		console.log("Get item with id: ", itemId);
+		console.log("Get item with id: ", typeof itemId);
 	
 		dbCollection.findOne({ id: itemId }, (error, result) => {
 			console.log("Get error with id: ", JSON.stringify(error));
