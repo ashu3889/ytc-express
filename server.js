@@ -13,9 +13,9 @@ server.use(function(req, res, next) {
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
   next();
 });
-server.use(body_parser.urlencoded({ extended: false }));
-server.use(body_parser.json());
-server.use(body_parser({limit: '4MB'}))
+
+server.use(body_parser.json({limit: '50mb'}));
+server.use(body_parser.urlencoded({ limit: '50mb', extended: true }));
 
 const port = 4000;
 
