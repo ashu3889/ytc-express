@@ -165,3 +165,8 @@ db.initialize(dbName, collectionName2, function(dbCollection) { // successCallba
 server.listen(process.env.PORT || 3000, () => {
     console.log(`Server listening at ${port}`);
 });
+
+server.on('clientError', (err, socket) => {
+	console.error(err);
+	socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
+});
