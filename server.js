@@ -30,7 +30,7 @@ db.initialize(dbName, collectionName, function(dbCollection) { // successCallbac
     // get all items
     dbCollection.find().toArray(function(err, result) {
         if (err) throw err;
-          console.log(result);
+          // console.log(result);
     });
 
 	// << db CRUD routes >>
@@ -98,7 +98,7 @@ db.initialize(dbName, collectionName2, function(dbCollection) { // successCallba
     // get all items
     dbCollection.find().toArray(function(err, result) {
         if (err) throw err;
-          console.log(result);
+          // console.log(result);
     });
 
 	// << db CRUD routes >>
