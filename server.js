@@ -109,7 +109,7 @@ server.get('/state/:id', async(request, res) => {
     const itemId = parseInt(request.params.id);
     const client = new MongoClient(uri);
     await client.connect();
-    const users = await client.db('ytc').collection('state').findOne({ id: itemId }).toArray();
+    const users = await client.db('ytc').collection('state').findOne({ id: itemId });
     await client.close();
     res.status(200).send({
       "status": "ok",
