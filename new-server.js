@@ -1,20 +1,11 @@
 const { MongoClient } = require("mongodb");
-
-
 const express = require("express");
 const server = express();
-// var memwatch = require('memwatch');
-
-
 const body_parser = require("body-parser");
 
 // parse JSON (application/json content-type)
 var cors = require('cors');
 server.use(cors());
-
-// memwatch.on('leak', function(info) { 
-// 	console.log('leak info is...' + info);
-//  });
 
 server.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
