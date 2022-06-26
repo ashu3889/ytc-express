@@ -48,7 +48,6 @@ const port = 4000;
 // })
 const uri = "mongodb+srv://ashu3889:amma2011@cluster0.uwkcv.mongodb.net/?retryWrites=true&w=majority";
 
-
 server.post('/items', async(req, res) => {
     const item = request.body;
     const client = new MongoClient(uri);
@@ -62,7 +61,72 @@ server.post('/items', async(req, res) => {
     });
   })
 
-server.listen(process.env.PORT || 3000, () => {
+server.get('/items', async(req, res) => {
+    const item = request.body;
+    const client = new MongoClient(uri);
+    await client.connect();
+    await client.db('ytc').collection('trend').find()
+    await client.close();
+    res.status(200).send({
+      "status": "ok",
+      "message": "Trend data obtained for .." + JSON.stringify(res),
+      "user": res
+    });
+})
+
+server.get('/items/:id', async(req, res) => {
+    const item = request.body;
+    const client = new MongoClient(uri);
+    await client.connect();
+    await client.db('ytc').collection('trend').findOne({ id: itemId })
+    await client.close();
+    res.status(200).send({
+      "status": "ok",
+      "message": "Trend data obtained for ID .." + JSON.stringify(res),
+      "user": res
+    });
+})
+
+server.post('/state', async(req, res) => {
+    const item = request.body;
+    const client = new MongoClient(uri);
+    await client.connect();
+    await client.db('ytc').collection('state').insertOne(item);
+    await client.close();
+    res.status(200).send({
+      "status": "ok",
+      "message": "Data stored for ID .." + JSON.stringify(item),
+      "user": item
+    });
+  })
+
+server.get('/state', async(req, res) => {
+    const item = request.body;
+    const client = new MongoClient(uri);
+    await client.connect();
+    await client.db('ytc').collection('state').find()
+    await client.close();
+    res.status(200).send({
+      "status": "ok",
+      "message": "State data obtained for .." + JSON.stringify(res),
+      "user": res
+    });
+})
+
+server.get('/state/:id', async(req, res) => {
+    const item = request.body;
+    const client = new MongoClient(uri);
+    await client.connect();
+    await client.db('ytc').collection('state').findOne({ id: itemId })
+    await client.close();
+    res.status(200).send({
+      "status": "ok",
+      "message": "State data stored for ID .." + JSON.stringify(res),
+      "user": res
+    });
+})
+
+server.listen(process.env.PORT || 4000, () => {
     console.log(`Server listening at ${port}`);
 });
 
