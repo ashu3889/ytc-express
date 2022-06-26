@@ -62,7 +62,7 @@ server.get('/items', async(request, res) => {
 server.get('/items/:id', async(request, res) => {
     const item = request.body;
     const itemId = parseInt(request.params.id);
-    console.log('itemId is...' + itemId);
+    console.log('New server itemId is...' + itemId);
     const client = new MongoClient(uri);
     await client.connect();
     // await client.db('ytc').collection('trend').findOne({ id: itemId })
