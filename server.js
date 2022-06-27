@@ -35,7 +35,7 @@ server.post('/items', async(request, res) => {
     const itemId = parseInt(request.params.id);
     const client = new MongoClient(uri);
     await client.connect();
-    await client.db('ytc').collection('trend').deleteOne({ scripName: request.params.scripName });;
+    await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
     await client.db('ytc').collection('trend').insertOne(item);
     await client.close();
     res.status(200).send({
@@ -80,7 +80,7 @@ server.post('/state', async(request, res) => {
     const itemId = parseInt(request.params.id);
     const client = new MongoClient(uri);
     await client.connect();
-    await client.db('ytc').collection('state').deleteOne({ scripName: request.params.scripName });;
+    await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
     await client.db('ytc').collection('state').insertOne(item);
     await client.close();
     res.status(200).send({
