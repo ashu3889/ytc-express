@@ -134,6 +134,20 @@ server.post('/results', async(request, res) => {
   });
 })
 
+server.get('/results', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri2);
+  await client.connect();
+  const users = await client.db('ytc').collection('result').find().toArray();
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Result data obtained ",
+    "user": users
+  });
+})
+
 
 server.post('/items2', async(request, res) => {
   const item = request.body;
