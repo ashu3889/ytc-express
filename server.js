@@ -46,6 +46,34 @@ server.post('/items', async(request, res) => {
     });
 })
 
+server.delete('/items', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri);
+  await client.connect();
+  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data deleted for ID .." + item,
+    "user": item
+  });
+})
+
+server.delete('/state', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri);
+  await client.connect();
+  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data stored for ID .." + item,
+    "user": item
+  });
+})
+
 server.get('/items', async(request, res) => {
     const item = request.body;
     const itemId = parseInt(request.params.id);
