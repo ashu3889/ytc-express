@@ -30,6 +30,8 @@ const port = 4000;
 
 const uri = "mongodb+srv://ashu3889:amma2011@cluster0.uwkcv.mongodb.net/?retryWrites=true&w=majority";
 const uri2 = "mongodb+srv://kavita3889:amma2011@cluster0.gcx33.mongodb.net/?retryWrites=true&w=majority";
+const uri3 = "mongodb+srv://jyotsana0812:amma2011@cluster0.snc1z38.mongodb.net/?retryWrites=true&w=majority";
+
 
 server.post('/items', async(request, res) => {
     const item = request.body;
@@ -283,6 +285,124 @@ server.get('/state2/:id', async(request, res) => {
   const item = request.body;
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
+  await client.connect();
+  const users = await client.db('ytc').collection('state').findOne({ id: itemId });
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "State data stored for ID ..",
+    "user": users
+  });
+})
+
+
+server.delete('/items3', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data deleted for ID .." + item,
+    "user": item
+  });
+})
+
+
+server.post('/items3', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('trend').insertOne(item);
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data stored for ID .." + item,
+    "user": item
+  });
+})
+
+server.get('/items3', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  const users = await client.db('ytc').collection('trend').find().toArray();
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Trend data obtained ",
+    "user": users
+  });
+})
+
+server.get('/items3/:id', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  console.log('New server itemId is...' + itemId);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  // await client.db('ytc').collection('trend').findOne({ id: itemId })
+  const users = await client.db('ytc').collection('trend').findOne({ id: itemId });
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Trend data obtained for ID .." + 'res',
+    "user": users
+  });
+})
+
+server.post('/state3', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('state').insertOne(item);
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data stored for ID .." + item,
+    "user": item
+  });
+})
+
+server.delete('/state3', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data deleted for ID .." + item,
+    "user": item
+  });
+})
+
+server.get('/state3', async(request, res) => {
+  const item = request.body;
+  const client = new MongoClient(uri3);
+  await client.connect();
+  await client.db('ytc').collection('state').find()
+  const users = await client.db('ytc').collection('state').findOne().toArray();
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "State data obtained for .." ,
+    "user": users
+  });
+})
+
+server.get('/state3/:id', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
   await client.connect();
   const users = await client.db('ytc').collection('state').findOne({ id: itemId });
   await client.close();
