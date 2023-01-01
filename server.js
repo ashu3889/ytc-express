@@ -28,9 +28,13 @@ server.use(body_parser.urlencoded({ limit: '50mb', extended: true }));
 
 const port = 4000;
 
-const uri = "mongodb+srv://ashu3889:amma2011@cluster0.uwkcv.mongodb.net/?retryWrites=true&w=majority";
-const uri2 = "mongodb+srv://kavita3889:amma2011@cluster0.gcx33.mongodb.net/?retryWrites=true&w=majority";
-const uri3 = "mongodb+srv://jyotsana0812:amma2011@cluster0.snc1z38.mongodb.net/?retryWrites=true&w=majority";
+// const uri = "mongodb+srv://ashu3889:amma2011@cluster0.uwkcv.mongodb.net/?retryWrites=true&w=majority";
+// const uri2 = "mongodb+srv://kavita3889:amma2011@cluster0.gcx33.mongodb.net/?retryWrites=true&w=majority";
+// const uri3 = "mongodb+srv://jyotsana0812:amma2011@cluster0.snc1z38.mongodb.net/?retryWrites=true&w=majority";
+
+const uri = "mongodb://localhost:24563";
+const uri2 = "mongodb://localhost:24563/";
+const uri3 = "mongodb://localhost:24563/";
 
 
 server.post('/items', async(request, res) => {
@@ -38,7 +42,7 @@ server.post('/items', async(request, res) => {
     const itemId = parseInt(request.params.id);
     const client = new MongoClient(uri);
     await client.connect();
-    await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+    await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
     await client.db('ytc').collection('trend').insertOne(item);
     await client.close();
     res.status(200).send({
@@ -53,7 +57,7 @@ server.delete('/items', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -67,7 +71,7 @@ server.delete('/state', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -111,7 +115,7 @@ server.post('/state', async(request, res) => {
     const itemId = parseInt(request.params.id);
     const client = new MongoClient(uri);
     await client.connect();
-    await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+    await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
     await client.db('ytc').collection('state').insertOne(item);
     await client.close();
     res.status(200).send({
@@ -154,7 +158,7 @@ server.post('/results', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('result').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('result').deleteOne({ id: request.body.scripName });;
   await client.db('ytc').collection('result').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -183,7 +187,7 @@ server.delete('/items2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -198,7 +202,7 @@ server.post('/items2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
   await client.db('ytc').collection('trend').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -229,6 +233,8 @@ server.get('/items2/:id', async(request, res) => {
   const client = new MongoClient(uri2);
   await client.connect();
   // await client.db('ytc').collection('trend').findOne({ id: itemId })
+
+
   const users = await client.db('ytc').collection('trend').findOne({ id: itemId });
   await client.close();
   res.status(200).send({
@@ -243,7 +249,7 @@ server.post('/state2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
   await client.db('ytc').collection('state').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -258,7 +264,7 @@ server.delete('/state2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -301,7 +307,7 @@ server.delete('/items3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -316,7 +322,7 @@ server.post('/items3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
   await client.db('ytc').collection('trend').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -331,6 +337,8 @@ server.get('/items3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
+
+  // client.db('ytc').collection('trend').createIndex( { "category": 1 } )
   const users = await client.db('ytc').collection('trend').find().toArray();
   await client.close();
   res.status(200).send({
@@ -361,7 +369,7 @@ server.post('/state3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
   await client.db('ytc').collection('state').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -376,7 +384,7 @@ server.delete('/state3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ scripName: request.body.scripName });;
+  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -413,7 +421,7 @@ server.get('/state3/:id', async(request, res) => {
   });
 })
 
-server.listen(process.env.PORT || 4000, () => {
+server.listen(process.env.PORT || 5000, () => {
     console.log(`Server listening at ${port}`);
 });
 
