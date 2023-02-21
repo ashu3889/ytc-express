@@ -32,9 +32,9 @@ const port = 4000;
 // const uri2 = "mongodb+srv://kavita3889:amma2011@cluster0.gcx33.mongodb.net/?retryWrites=true&w=majority";
 // const uri3 = "mongodb+srv://jyotsana0812:amma2011@cluster0.snc1z38.mongodb.net/?retryWrites=true&w=majority";
 
-const uri = "mongodb://localhost:24563";
-const uri2 = "mongodb://localhost:24563/";
-const uri3 = "mongodb://localhost:24563/";
+const uri = "mongodb://localhost:23456";
+const uri2 = "mongodb://localhost:23456/";
+const uri3 = "mongodb://localhost:23456/";
 
 
 server.post('/items', async(request, res) => {
@@ -42,7 +42,13 @@ server.post('/items', async(request, res) => {
     const itemId = parseInt(request.params.id);
     const client = new MongoClient(uri);
     await client.connect();
-    await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+
+    const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+    console.log('first item...before delete length is...' + dataLength);
+    await client.db('ytc').collection('trend').deleteMany({ id: request.body.id });
+    const afterDataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+    console.log('first item...after deleted Length is...' + afterDataLength);
+
     await client.db('ytc').collection('trend').insertOne(item);
     await client.close();
     res.status(200).send({
@@ -57,7 +63,15 @@ server.delete('/items', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+  // await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('ALL Delete....first item...before delete length is...' + dataLength);
+  await client.db('ytc').collection('trend').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('ALL Delete....first item...after delete Length is...' + afterDataLength);
+
+
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -71,7 +85,14 @@ server.delete('/state', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+  // await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('ALL Delete....first state...before delete length is...' + dataLength);
+  await client.db('ytc').collection('state').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('ALL Delete...first state...after delete Length is...' + afterDataLength);
+
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -115,7 +136,15 @@ server.post('/state', async(request, res) => {
     const itemId = parseInt(request.params.id);
     const client = new MongoClient(uri);
     await client.connect();
-    await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+    // await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+
+    const dataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+    console.log('first state...before delete length is...' + dataLength);
+    await client.db('ytc').collection('state').deleteMany({ id: request.body.id });
+    const afterDataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+    console.log('first state...after deleted Length is...' + afterDataLength);
+
+
     await client.db('ytc').collection('state').insertOne(item);
     await client.close();
     res.status(200).send({
@@ -187,7 +216,15 @@ server.delete('/items2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+  // await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('ALL Delete...delete second item...before delete length is...' + dataLength);
+  await client.db('ytc').collection('trend').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('ALL Delete...delete second item...after deleted Length is...' + afterDataLength);
+
+
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -202,7 +239,13 @@ server.post('/items2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('second items..before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
+  await client.db('ytc').collection('trend').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('second items...after deleted Length is...' + afterDataLength);
+
   await client.db('ytc').collection('trend').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -249,7 +292,13 @@ server.post('/state2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('second state ..before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
+  await client.db('ytc').collection('state').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('second state ...after deleted Length is...' + afterDataLength);
+
   await client.db('ytc').collection('state').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -264,7 +313,14 @@ server.delete('/state2', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+  // await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Delete....second state item...before delete length is...' + dataLength);
+  await client.db('ytc').collection('state').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Delete...second state item...after deleted Length is...' + afterDataLength);
+
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -307,7 +363,15 @@ server.delete('/items3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+  console.log('delete ...hello ...' + request.body.scripName);
+  // await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.scripName } ,{ limit: 100 } );
+  console.log('Delete....third items...before delete length is...' + dataLength);
+  await client.db('ytc').collection('trend').deleteMany({ id: request.body.scripName });
+  const afterDataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.scripName } ,{ limit: 100 } );
+  console.log('Delete...third items...after deleted Length is...' + afterDataLength);
+
   await client.close();
   res.status(200).send({
     "status": "ok",
@@ -322,7 +386,13 @@ server.post('/items3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('trend').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Third items...before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
+  await client.db('ytc').collection('trend').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Third items...after deleted Length is...' + afterDataLength);
+
   await client.db('ytc').collection('trend').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -369,7 +439,14 @@ server.post('/state3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+
+
+  const dataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Third state...before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
+  await client.db('ytc').collection('state').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Third state...after deleted Length is...' + afterDataLength);
+
   await client.db('ytc').collection('state').insertOne(item);
   await client.close();
   res.status(200).send({
@@ -384,7 +461,15 @@ server.delete('/state3', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri3);
   await client.connect();
-  await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+  // await client.db('ytc').collection('state').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.scripName } ,{ limit: 100 } );
+  console.log('Delete....third state...before delete length is...' + dataLength);
+  await client.db('ytc').collection('state').deleteMany({ id: request.body.scripName });
+  const afterDataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.scripName } ,{ limit: 100 } );
+  console.log('Delete...third state...after delete Length is...' + afterDataLength);
+
+  // console.log('req param is...' + JSON.stringify(request.body.scripName));
   await client.close();
   res.status(200).send({
     "status": "ok",
