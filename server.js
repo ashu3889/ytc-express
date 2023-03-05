@@ -357,6 +357,21 @@ server.get('/state2/:id', async(request, res) => {
   });
 })
 
+server.get('/rowCount/:id', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  const dataLength = await client.db('ytc').collection('state').countDocuments( { id: itemId } ,{ limit: 100 } );
+  console.log('Item length..' + dataLength + '..id...'+ itemId);
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Item length .." + dataLength,
+    "rowCount": dataLength
+  });
+})
+
 
 server.delete('/items3', async(request, res) => {
   const item = request.body;
