@@ -152,7 +152,7 @@ server.post('/state', async(request, res) => {
       "message": "Data stored for ID .." + item,
       "user": item
     });
-  })
+})
 
 server.get('/state', async(request, res) => {
     const item = request.body;
@@ -202,11 +202,20 @@ server.get('/results', async(request, res) => {
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
-  const users = await client.db('ytc').collection('result').find().toArray();
+  console.log('Result get data fired...');
+
+  const users = await client.db('ytc').collection('result').find(
+    {
+      "date": 
+      {
+          $gte: new Date((new Date().getTime() - (15 * 24 * 60 * 60 * 1000)))
+      }
+  }
+  ).toArray();
   await client.close();
   res.status(200).send({
     "status": "ok",
-    "message": "Result data obtained ",
+    "message": "Result data test ,,,obtained ",
     "user": users
   });
 })
@@ -240,11 +249,14 @@ server.post('/items2', async(request, res) => {
   const client = new MongoClient(uri2);
   await client.connect();
 
+
+  console.log('POST call request.body.id...' + request.body.id);
+
   const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
-  console.log('second items..before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
+  // console.log('second items..before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
   await client.db('ytc').collection('trend').deleteMany({ id: request.body.id });
   const afterDataLength = await client.db('ytc').collection('trend').countDocuments( { id: request.body.id } ,{ limit: 100 } );
-  console.log('second items...after deleted Length is...' + afterDataLength);
+  //console.log('second items...after deleted Length is...' + afterDataLength);
 
   await client.db('ytc').collection('trend').insertOne(item);
   await client.close();
@@ -289,9 +301,13 @@ server.get('/items2/:id', async(request, res) => {
 
 server.post('/state2', async(request, res) => {
   const item = request.body;
+  console.log('before...item id...' + request.body.id);
+  console.log('request body...' + JSON.stringify(item));
   const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri2);
   await client.connect();
+
+  console.log('after...item id...' + itemId);
 
   const dataLength = await client.db('ytc').collection('state').countDocuments( { id: request.body.id } ,{ limit: 100 } );
   console.log('second state ..before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
@@ -440,6 +456,11 @@ server.get('/items3/:id', async(request, res) => {
   const client = new MongoClient(uri3);
   await client.connect();
   // await client.db('ytc').collection('trend').findOne({ id: itemId })
+
+  //
+  const dataLength = await client.db('ytc').collection('trend').countDocuments( { id: itemId } ,{ limit: 1000 } );
+  console.log('Item length...' + dataLength);
+
   const users = await client.db('ytc').collection('trend').findOne({ id: itemId });
   await client.close();
   res.status(200).send({
@@ -530,18 +551,20 @@ server.on('clientError', (err, socket) => {
 	socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
 
+
+
 server.post('/ibstock', async(request, res) => {
-  console.log('IBKR...request received...' + JSON.stringify(request.body));
+  console.log('IBKR...request received...');
   const item = request.body;
   // const itemId = parseInt(request.params.id);
   const client = new MongoClient(uri);
   await client.connect();
   // await client.db('ytc').collection('ib_stock_info').deleteOne({ id: request.body.scripName });;
 
-  const dataLength = await client.db('ytc').collection('ib_stock_info').countDocuments( { con_id: request.body.con_id } ,{ limit: 100 } );
+  const dataLength = await client.db('ytc').collection('ib_stock_info').countDocuments( { id: request.body.con_id } ,{ limit: 100 } );
   console.log('first state...before delete length is...' + dataLength);
-  await client.db('ytc').collection('ib_stock_info').deleteMany({ con_id: request.body.con_id });
-  const afterDataLength = await client.db('ytc').collection('ib_stock_info').countDocuments( { con_id: request.body.con_id } ,{ limit: 100 } );
+  await client.db('ytc').collection('ib_stock_info').deleteMany({ id: request.body.con_id });
+  const afterDataLength = await client.db('ytc').collection('ib_stock_info').countDocuments( { id: request.body.con_id } ,{ limit: 100 } );
   console.log('first state...after deleted Length is...' + afterDataLength);
 
 
@@ -567,4 +590,9 @@ server.get('/ibstock', async(request, res) => {
     "user": users
   });
 })
+
+
+
+
+module.exports = app;
 
