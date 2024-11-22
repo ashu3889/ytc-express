@@ -559,11 +559,141 @@ server.get('/ibstock', async(request, res) => {
   const client = new MongoClient(uri);
   await client.connect();
   await client.db('ytc').collection('ib_stock_info').find()
-  const users = await client.db('ytc').collection('ib_stock_info').findOne().toArray();
+  let users = await client.db('ytc').collection('ib_stock_info').findOne();
+
+  // if(users !== null) {
+  //   users = users.toArray();
+  // }
   await client.close();
   res.status(200).send({
     "status": "ok",
     "message": "State data obtained for .." ,
+    "user": users
+  });
+});
+
+server.get('/ibstock/:id', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  const users = await client.db('ytc').collection('ib_stock_info').findOne({ id: itemId });
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "State data stored for ID ..",
+    "user": users
+  });
+})
+
+server.post('/investing', async(request, res) => {
+  console.log('IBKR...request received...' + JSON.stringify(request.body));
+  const item = request.body;
+  // const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri);
+  await client.connect();
+  // await client.db('ytc').collection('investing_stocks').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('investing_stocks').countDocuments( { ticker: request.body.ticker } ,{ limit: 100 } );
+  console.log('first state...before delete length is...' + dataLength);
+  await client.db('ytc').collection('investing_stocks').deleteMany({ ticker: request.body.ticker });
+  const afterDataLength = await client.db('ytc').collection('investing_stocks').countDocuments( { ticker: request.body.ticker } ,{ limit: 100 } );
+  console.log('first state...after deleted Length is...' + afterDataLength);
+
+
+  await client.db('ytc').collection('investing_stocks').insertOne(item);
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data stored for ID .." + item,
+    "user": item
+  });
+})
+
+server.get('/investing', async(request, res) => {
+  const item = request.body;
+  const client = new MongoClient(uri);
+  await client.connect();
+  await client.db('ytc').collection('investing_stocks').find()
+  const users = await client.db('ytc').collection('investing_stocks').findOne().toArray();
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "State data obtained for .." ,
+    "user": users
+  });
+});
+
+
+server.post('/ibkr_trade', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+
+
+  const dataLength = await client.db('ytc').collection('investing_trade_management').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Third state...before delete length is...' + dataLength + '...request.body.id...' + request.body.id + '...itemId...' + itemId);
+  await client.db('ytc').collection('investing_trade_management').deleteMany({ id: request.body.id });
+  const afterDataLength = await client.db('ytc').collection('investing_trade_management').countDocuments( { id: request.body.id } ,{ limit: 100 } );
+  console.log('Third state...after deleted Length is...' + afterDataLength);
+
+  await client.db('ytc').collection('investing_trade_management').insertOne(item);
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data stored for ID .." + item,
+    "user": item
+  });
+})
+
+server.delete('/ibkr_trade', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  // await client.db('ytc').collection('investing_trade_management').deleteOne({ id: request.body.scripName });;
+
+  const dataLength = await client.db('ytc').collection('investing_trade_management').countDocuments( { id: request.body.scripName } ,{ limit: 100 } );
+  console.log('Delete....third state...before delete length is...' + dataLength);
+  await client.db('ytc').collection('investing_trade_management').deleteMany({ id: request.body.scripName });
+  const afterDataLength = await client.db('ytc').collection('investing_trade_management').countDocuments( { id: request.body.scripName } ,{ limit: 100 } );
+  console.log('Delete...third state...after delete Length is...' + afterDataLength);
+
+  // console.log('req param is...' + JSON.stringify(request.body.scripName));
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Data deleted for ID .." + item,
+    "user": item
+  });
+})
+
+server.get('/ibkr_trade', async(request, res) => {
+  const item = request.body;
+  const client = new MongoClient(uri3);
+  await client.connect();
+  await client.db('ytc').collection('investing_trade_management').find()
+  const users = await client.db('ytc').collection('investing_trade_management').find(data, (err, res) => err ? reject(err) : res.toArray().then(x => resolve(x)))
+
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Trade data obtained for .." ,
+    "user": users
+  });
+})
+
+server.get('/ibkr_trade/:id', async(request, res) => {
+  const item = request.body;
+  const itemId = parseInt(request.params.id);
+  const client = new MongoClient(uri3);
+  await client.connect();
+  const users = await client.db('ytc').collection('investing_trade_management').findOne({ id: itemId });
+  await client.close();
+  res.status(200).send({
+    "status": "ok",
+    "message": "Trade data stored for ID ..",
     "user": users
   });
 })
