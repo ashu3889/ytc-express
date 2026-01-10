@@ -1726,3 +1726,152 @@ server.post('/api/generate-rag-chart', (req, res) => {
       viewUrl: `http://localhost:3000/images/${fileName}`
   });
 });
+
+const CONFIG = {
+  width: 900,
+  height: 500,
+  padding: 70,
+  spotlightSize: 140
+};
+
+
+/**
+ * HELPER: Map Array Index to Pixel Coordinates
+ * Prevents errors with duplicate price values.
+ */
+function getPixelCoordsByIndex(index, allData, type = 'high') {
+  if (index < 0 || index >= allData.length) return null;
+
+  const chartWidth = CONFIG.width - (CONFIG.padding * 2);
+  const x = CONFIG.padding + (index * (chartWidth / (allData.length - 1)));
+
+  const highs = allData.map(d => d.high);
+  const lows = allData.map(d => d.low);
+  const maxP = Math.max(...highs);
+  const minP = Math.min(...lows);
+  const range = maxP - minP || 1;
+  
+  // Use the specific price at that index (High for start, Low for end)
+  const price = type === 'high' ? allData[index].high : allData[index].low;
+  
+  const chartHeight = CONFIG.height - (CONFIG.padding * 2);
+  const y = CONFIG.height - CONFIG.padding - ((price - minP) / range) * chartHeight;
+
+  return { x: Math.round(x), y: Math.round(y) };
+}
+
+/**
+* CORE: drawValidationChart
+* Renders the candles, the trendline, the support base, and the spotlight.
+*/
+function drawValidationChart(data, symbol, highIndex, lowIndex) {
+  // 1. Determine the "Zoom" Range
+  // We add a small buffer (e.g., 5 candles) so the start/end aren't touching the edges
+  const buffer = 5;
+  const startIdx = Math.max(0, highIndex - buffer);
+  const endIdx = Math.min(data.length - 1, lowIndex + buffer);
+  const visibleData = data.slice(startIdx, endIdx);
+
+  const canvas = createCanvas(CONFIG.width, CONFIG.height);
+  const ctx = canvas.getContext('2d');
+
+  // White Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, CONFIG.width, CONFIG.height);
+
+  // 2. Calculate Scales based ONLY on the visible slice
+  const highs = visibleData.map(d => d.high);
+  const lows = visibleData.map(d => d.low);
+  const maxP = Math.max(...highs);
+  const minP = Math.min(...lows);
+  const range = maxP - minP || 1;
+
+  // Mapping functions localized to the zoom window
+  const getX = (i) => {
+      // i is the global index; we map its relative position in the slice
+      const relativeIdx = i - startIdx;
+      return CONFIG.padding + (relativeIdx * ((CONFIG.width - CONFIG.padding * 2) / (visibleData.length - 1)));
+  };
+  const getY = (p) => CONFIG.height - CONFIG.padding - ((p - minP) / range) * (CONFIG.height - CONFIG.padding * 2);
+
+  // 3. Draw the Magnified Candles
+  visibleData.forEach((d, i) => {
+      const globalIdx = startIdx + i;
+      const x = getX(globalIdx);
+      const color = d.close >= d.open ? '#089981' : '#f23645';
+      const candleWidth = ((CONFIG.width - CONFIG.padding * 2) / visibleData.length) * 0.7;
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, getY(d.high)); ctx.lineTo(x, getY(d.low)); ctx.stroke();
+      
+      ctx.fillStyle = color;
+      const bodyTop = getY(Math.max(d.open, d.close));
+      const bodyBottom = getY(Math.min(d.open, d.close));
+      ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, Math.max(bodyBottom - bodyTop, 1));
+  });
+
+  // 4. Draw Prominent Validation Lines
+  const highCoords = { x: getX(highIndex), y: getY(data[highIndex].high) };
+  const lowCoords = { x: getX(lowIndex), y: getY(data[lowIndex].low) };
+
+  // Support Baseline (Teal) - Now spans the zoomed window
+  ctx.strokeStyle = '#00a1a1';
+  ctx.lineWidth = 3; // Thicker for RAG detection
+  ctx.beginPath();
+  ctx.moveTo(CONFIG.padding, lowCoords.y);
+  ctx.lineTo(CONFIG.width - CONFIG.padding, lowCoords.y);
+  ctx.stroke();
+
+  // Descending Trendline (Red)
+  ctx.strokeStyle = '#f23645';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(highCoords.x, highCoords.y);
+  ctx.lineTo(lowCoords.x, lowCoords.y);
+  ctx.stroke();
+
+  // Markers
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#333';
+  [highCoords, lowCoords].forEach(c => {
+      ctx.beginPath(); ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+  });
+
+  return canvas.toBuffer('image/png');
+}
+
+/**
+* API ENDPOINT
+*/
+
+// ohlcData: data,
+// highIndex: highIndex,
+// lowIndex : lowIndex
+server.post('/api/generate-validation-swing', (req, res) => {
+  console.log('hello...b4 starting...');
+  const { ohlcData, highIndex, lowIndex } = req.body;
+  const symbol = 'nasdaq';
+
+  console.log('b4 starting...');
+
+  if (!ohlcData || highIndex === undefined || lowIndex === undefined) {
+      return res.status(400).json({ error: "Missing indices" });
+  }
+
+  console.log('starting...');
+
+  try {
+      const buffer = drawValidationChart(ohlcData, symbol, highIndex, lowIndex);
+      const fileName = `valid_${Date.now()}.png`;
+      fs.writeFileSync(path.join(STORAGE_DIR, fileName), buffer);
+
+      res.json({
+          success: true,
+          imageUrl: `http://localhost:3000/view-validation/${fileName}`
+      });
+  } catch (err) {
+      res.status(500).json({ error: err.message });
+  }
+});
