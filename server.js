@@ -1701,8 +1701,7 @@ function drawChart(data, symbol, maskCoords = null) {
 * API ENDPOINT
 */
 server.post('/api/generate-rag-chart', (req, res) => {
-  const { ohlcData, maskTarget } = req.body;
-  const symbol = "Nasdaq";
+  const { symbol, ohlcData, maskTarget } = req.body;
 
   if (!ohlcData || ohlcData.length < 2) {
       return res.status(400).json({ error: "Insufficient OHLC data." });
@@ -1859,8 +1858,8 @@ function drawValidationChart(data, symbol, highIndex, lowIndex) {
 // lowIndex : lowIndex
 server.post('/api/generate-validation-swing', (req, res) => {
   console.log('hello...b4 starting...');
-  const { ohlcData, highIndex, lowIndex } = req.body;
-  const symbol = 'nasdaq';
+  const { symbol, ohlcData, highIndex, lowIndex } = req.body;
+  // const symbol = 'nasdaq';
 
   console.log('b4 starting...');
 
@@ -1872,7 +1871,7 @@ server.post('/api/generate-validation-swing', (req, res) => {
 
   try {
       const buffer = drawValidationChart(ohlcData, symbol, highIndex, lowIndex);
-      const fileName = `valid_${Date.now()}.png`;
+      const fileName = `${symbol}_${Date.now()}.png`;
       fs.writeFileSync(path.join(STORAGE_DIR, fileName), buffer);
 
       console.log('file path is...' + path.join(STORAGE_DIR, fileName));
