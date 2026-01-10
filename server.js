@@ -3,7 +3,11 @@ const { MongoClient } = require("mongodb");
 
 const express = require("express");
 const server = express();
+const path = require('path');
 // var memwatch = require('memwatch');
+
+const { createCanvas } = require('canvas');
+const fs = require('fs');
 
 
 const body_parser = require("body-parser");
@@ -1513,4 +1517,212 @@ server.get('/rowCount_weekness/:id', async(request, res) => {
     "message": "Item length .." + dataLength,
     "rowCount": dataLength
   });
-})
+});
+
+
+/**
+ * HELPER: Map Data to Pixels
+ */
+function getPixelCoords(target, allData) {
+  const { width, height, padding } = CHART_CONFIG;
+  
+  const index = allData.findIndex(d => {
+      // console.log("-------");
+      // console.log('A...' +  new Date(d.date).getTime());
+      // console.log('B...' +  new Date(target.timestamp).getTime());
+      // console.log("-------");
+
+      return new Date(d.date).getTime() === new Date(target.timestamp).getTime();
+    }
+  );
+  if (index === -1) return null;
+
+  const chartWidth = width - (padding * 2);
+  const x = padding + (index * (chartWidth / (allData.length - 1)));
+
+  const highs = allData.map(d => d.high);
+  const lows = allData.map(d => d.low);
+  const maxP = Math.max(...highs);
+  const minP = Math.min(...lows);
+  
+  const chartHeight = height - (padding * 2);
+  const y = height - padding - ((target.price - minP) / (maxP - minP)) * chartHeight;
+
+  return { x: Math.round(x), y: Math.round(y) };
+}
+
+const STORAGE_DIR = path.join(__dirname, 'ohlc_storage');
+if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR);
+
+// Config constants to ensure coordinate consistency
+const CHART_CONFIG = {
+    width: 900,
+    height: 500,
+    padding: 60,
+    bgColor: '#ffffff',
+    gridColor: '#e0e3eb',
+    axisColor: '#8a8a8a',
+    textColor: '#131722'
+};
+
+/**
+* DRAWING LOGIC
+*/
+
+
+// function drawChart(data, symbol, maskCoords = null) {
+//   const { width, height, padding } = CHART_CONFIG;
+//   const canvas = createCanvas(width, height);
+//   const ctx = canvas.getContext('2d');
+
+//   // Background
+//   ctx.fillStyle = CHART_CONFIG.bgColor;
+//   ctx.fillRect(0, 0, width, height);
+
+//   const highs = data.map(d => d.high);
+//   const lows = data.map(d => d.low);
+//   const maxP = Math.max(...highs);
+//   const minP = Math.min(...lows);
+//   const range = maxP - minP;
+
+//   const getX = (i) => padding + (i * ((width - padding * 2) / (data.length - 1)));
+//   const getY = (p) => height - padding - ((p - minP) / range) * (height - padding * 2);
+
+//   // Draw Candles
+//   data.forEach((d, i) => {
+//       const x = getX(i);
+//       const color = d.close >= d.open ? '#089981' : '#f23645';
+//       const candleWidth = ((width - padding * 2) / data.length) * 0.7;
+
+//       ctx.strokeStyle = color;
+//       ctx.beginPath();
+//       ctx.moveTo(x, getY(d.high));
+//       ctx.lineTo(x, getY(d.low));
+//       ctx.stroke();
+
+//       ctx.fillStyle = color;
+//       const bodyTop = getY(Math.max(d.open, d.close));
+//       const bodyBottom = getY(Math.min(d.open, d.close));
+//       ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, Math.max(bodyBottom - bodyTop, 1));
+//   });
+
+//   // Apply Mask for Visual RAG
+//   if (maskCoords) {
+//       const size = 40;
+//       ctx.fillStyle = 'black';
+//       ctx.fillRect(maskCoords.x - size / 2, maskCoords.y - size / 2, size, size);
+//       ctx.fillStyle = 'white';
+//       ctx.font = '8px Arial';
+//       ctx.fillText('MASK', maskCoords.x - 12, maskCoords.y + 3);
+//   }
+
+//   return canvas.toBuffer('image/png');
+// }
+
+function drawChart(data, symbol, maskCoords = null) {
+  const { width, height, padding } = CHART_CONFIG;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  // 1. Draw Background
+  ctx.fillStyle = CHART_CONFIG.bgColor; // Ensure this is '#ffffff'
+  ctx.fillRect(0, 0, width, height);
+
+  const highs = data.map(d => d.high);
+  const lows = data.map(d => d.low);
+  const maxP = Math.max(...highs);
+  const minP = Math.min(...lows);
+  const range = maxP - minP || 1;
+
+  const getX = (i) => padding + (i * ((width - padding * 2) / (data.length - 1)));
+  const getY = (p) => height - padding - ((p - minP) / range) * (height - padding * 2);
+
+  // 2. Draw Candles
+  data.forEach((d, i) => {
+      const x = getX(i);
+      const color = d.close >= d.open ? '#089981' : '#f23645';
+      const candleWidth = ((width - padding * 2) / data.length) * 0.7;
+
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x, getY(d.high));
+      ctx.lineTo(x, getY(d.low));
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      const bodyTop = getY(Math.max(d.open, d.close));
+      const bodyBottom = getY(Math.min(d.open, d.close));
+      ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, Math.max(bodyBottom - bodyTop, 1));
+  });
+
+  // 3. Apply Inverse Mask (Four-Rectangle Method)
+  if (maskCoords) {
+      const size = 100; // Size of the visible window
+      const half = size / 2;
+      
+      // Use a very dark grey or black with high opacity
+      // We avoid destination-out to prevent the checkered/transparent background
+      ctx.fillStyle = 'rgba(20, 20, 20, 0.95)'; 
+
+      // Top Rectangle (Full width, from top to spotlight top)
+      ctx.fillRect(0, 0, width, maskCoords.y - half);
+      
+      // Bottom Rectangle (Full width, from spotlight bottom to canvas bottom)
+      ctx.fillRect(0, maskCoords.y + half, width, height - (maskCoords.y + half));
+      
+      // Left Rectangle (From spotlight top to bottom, from left edge to spotlight left)
+      ctx.fillRect(0, maskCoords.y - half, maskCoords.x - half, size);
+      
+      // Right Rectangle (From spotlight top to bottom, from spotlight right to right edge)
+      ctx.fillRect(maskCoords.x + half, maskCoords.y - half, width - (maskCoords.x + half), size);
+
+      // 4. Draw Border and Label
+      ctx.strokeStyle = '#2962FF';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(maskCoords.x - half, maskCoords.y - half, size, size);
+      
+      ctx.fillStyle = '#2962FF';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText('VISIBLE REGION', maskCoords.x - half, maskCoords.y - half - 8);
+  }
+
+  return canvas.toBuffer('image/png');
+}
+
+/**
+* API ENDPOINT
+*/
+server.post('/api/generate-rag-chart', (req, res) => {
+  const { ohlcData, maskTarget } = req.body;
+  const symbol = "Nasdaq";
+
+  if (!ohlcData || ohlcData.length < 2) {
+      return res.status(400).json({ error: "Insufficient OHLC data." });
+  }
+
+  // 1. Calculate Mask Coordinates
+  let coords = null;
+  if (maskTarget) {
+    coords = getPixelCoords(maskTarget, ohlcData);
+  }
+
+  console.log('coords...' + JSON.stringify(coords));
+
+  // 2. Generate Image
+  const buffer = drawChart(ohlcData, symbol, coords);
+  
+  
+  // 3. Save Locally
+  const fileName = `${symbol || 'chart'}_${Date.now()}.png`;
+  const filePath = path.join(STORAGE_DIR, fileName);
+  fs.writeFileSync(filePath, buffer);
+
+  // 4. Return Data
+  res.json({
+      success: true,
+      pixelCoordinates: coords,
+      imageName: fileName,
+      localPath: filePath,
+      viewUrl: `http://localhost:3000/images/${fileName}`
+  });
+});
