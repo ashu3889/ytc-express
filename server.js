@@ -1,5 +1,13 @@
 const { MongoClient } = require("mongodb");
 
+const tf = require("@tensorflow/tfjs-node");
+const mobilenet = require("@tensorflow-models/mobilenet");
+const cosine = require("cosine-similarity");
+
+// import * as tf from '@tensorflow/tfjs-node';
+// import * as mobilenet from '@tensorflow-models/mobilenet';
+// import cosine from 'cosine-similarity';
+
 
 const express = require("express");
 const server = express();
@@ -1867,11 +1875,88 @@ server.post('/api/generate-validation-swing', (req, res) => {
       const fileName = `valid_${Date.now()}.png`;
       fs.writeFileSync(path.join(STORAGE_DIR, fileName), buffer);
 
+      console.log('file path is...' + path.join(STORAGE_DIR, fileName));
+
       res.json({
           success: true,
-          imageUrl: `http://localhost:3000/view-validation/${fileName}`
+          imagePath: path.join(STORAGE_DIR, fileName),
       });
   } catch (err) {
       res.status(500).json({ error: err.message });
   }
 });
+
+
+// Singleton model variable to avoid reloading for every request
+let model = null;
+/**
+ * Load MobileNet once when the server starts
+ */
+const loadModel = async () => {
+    if (!model) {
+        console.log("Loading TensorFlow MobileNet...");
+        model = await mobilenet.load();
+        console.log("Model loaded successfully.");
+    }
+};
+
+/**
+ * Feature Extraction Helper
+ */
+async function getEmbedding(imagePath) {
+    const buffer = fs.readFileSync(imagePath);
+    const tfimage = tf.node.decodeImage(buffer, 3);
+    
+    // We use the 'infer' method to get the vector before the classification layer
+    const embedding = model.infer(tfimage, true);
+    const vector = await embedding.array();
+
+    // Memory cleanup
+    tfimage.dispose();
+    embedding.dispose();
+
+    return vector[0];
+}
+
+/**
+ * API ENDPOINT: Compare Input to Reference
+ */
+server.post('/api/compare-trades', async (req, res) => {
+    const { referenceImageName, inputImageName } = req.body;
+
+    // const refPath = path.join(STORAGE_DIR, referenceImageName);
+    // const inputPath = path.join(STORAGE_DIR, inputImageName);
+
+    const refPath = referenceImageName;
+    const inputPath = inputImageName;
+
+    if (!fs.existsSync(refPath) || !fs.existsSync(inputPath)) {
+        return res.status(404).json({ error: "One or both images not found." });
+    }
+
+    try {
+        await loadModel();
+
+        const refVector = await getEmbedding(refPath);
+        const inputVector = await getEmbedding(inputPath);
+
+        const similarity = cosine(refVector, inputVector);
+        
+        // Confidence Logic: Scaling similarity to a human-readable factor
+        const confidence = (similarity * 100).toFixed(2);
+
+        res.json({
+            success: true,
+            confidenceFactor: `${confidence}%`,
+            similarityScore: similarity,
+            matchDetected: similarity > 0.85,
+            analysis: similarity > 0.85 ? 
+                "High geometric similarity to reference weakness pattern." : 
+                "Pattern does not sufficiently match the reference."
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal analysis error." });
+    }
+});
+
