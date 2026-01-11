@@ -1957,5 +1957,20 @@ server.post('/api/compare-trades', async (req, res) => {
         console.error(err);
         res.status(500).json({ error: "Internal analysis error." });
     }
+    finally {
+      // --- AUTO-DELETE LOGIC ---
+      // We delete the input signal image to save space. 
+      // Note: You might want to keep the 'reference' image if it's part of your library.
+      try {
+          if (fs.existsSync(inputPath)) {
+              fs.unlinkSync(inputPath); 
+              console.log(`Temporary signal image deleted: ${inputPath}`);
+          }
+          // Uncomment below if you also want to delete the reference after one-time use
+          // fs.unlinkSync(refPath); 
+      } catch (cleanupErr) {
+          console.error("Cleanup Error:", cleanupErr);
+      }
+  }
 });
 
