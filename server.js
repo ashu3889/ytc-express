@@ -2765,11 +2765,11 @@ server.post('/api/compare-trades', async (req, res) => {
             fileBuffer.lowIndex,
             fileBuffer.uptrendStartIndex
           );
-          const fileName = `${fileBuffer.symbol}_${Date.now()}.png`;
+          const fileName = `${fileBuffer.symbol}_${parseInt(confidence)}_${Date.now()}.png`;
 
           console.log('similarity...' + similarity);
           console.log('uptrendStartIndex..' + fileBuffer.uptrendStartIndex);
-          if(similarity < .90 ) {
+          if(similarity < .85 ) {
             // store in weekness folder
             fs.writeFileSync(path.join(NOISE_WEAKENSS_TRAIN_STORAGE_DIR, fileName), buffer);
           }
