@@ -2,93 +2,113 @@ const tf = require('@tensorflow/tfjs-node');
 const fs = require('fs');
 const path = require('path');
 
-// --- CONFIGURATION ---
-const DATA_PATH = './cnn/train';
-const MODEL_SAVE_PATH = 'file://./my-model';
+const DATA_PATH = './cnn/train_new';
 const IMAGE_SIZE = 200;
-const EPOCHS = 50;
-const BATCH_SIZE = 32;
-const CATEGORIES = ['noise', 'strong_down', 'weak_down'];
+const CATEGORIES = ['noise', 'strong_down', 'week_down'];
+
+// Versioning
+const VERSION = 'v2_balanced';
+const SAVE_DIR = `./models/model_${VERSION}`;
 
 async function train() {
-    console.log("🚀 Starting Robust Training...");
+    console.log(`🏗️  Architecting Model ${VERSION}...`);
     
-    const images = [];
-    const labels = [];
+    let rawImages = [];
+    let rawLabels = [];
 
-    // 1. Load and Augment Data
+    // 1. Get counts for balancing
+    const counts = CATEGORIES.map(cat => {
+        const dir = path.join(DATA_PATH, cat);
+        return fs.existsSync(dir) ? fs.readdirSync(dir).length : 0;
+    });
+    
+    const signalCount = counts[1] + counts[2];
+    const noiseLimit = Math.max(signalCount * 2, 200); 
+
     for (let i = 0; i < CATEGORIES.length; i++) {
         const dir = path.join(DATA_PATH, CATEGORIES[i]);
-        const files = fs.readdirSync(dir).filter(f => f.match(/\.(jpg|jpeg|png)$/i));
-        
-        console.log(`📂 Loading ${files.length} images from ${CATEGORIES[i]}...`);
+        if (!fs.existsSync(dir)) continue;
+
+        let files = fs.readdirSync(dir).filter(f => f.match(/\.(jpg|jpeg|png)$/i));
+        if (CATEGORIES[i] === 'noise' && files.length > noiseLimit) files = files.slice(0, noiseLimit);
 
         files.forEach(file => {
             const buffer = fs.readFileSync(path.join(dir, file));
-            
-            // --- THE FIX: ROBUST PREPROCESSING ---
-            const tensor = tf.tidy(() => {
-                let img = tf.node.decodeImage(buffer, 1) // Force Grayscale
-                    .resizeNearestNeighbor([IMAGE_SIZE, IMAGE_SIZE])
-                    .toFloat();
-            
-                // --- CORRECTED STANDARDIZATION ---
-                // tf.moments returns both mean and variance
-                const { mean, variance } = tf.moments(img);
-                const std = tf.sqrt(variance);
+            tf.tidy(() => {
+                const decode = tf.node.decodeImage(buffer, 3).resizeNearestNeighbor([IMAGE_SIZE, IMAGE_SIZE]).toFloat();
                 
-                // Subtract mean and divide by standard deviation
-                // We add a tiny epsilon (1e-5) to prevent "Division by Zero" on blank images
-                return img.sub(mean).div(std.add(tf.scalar(1e-5))); 
-            });
+                const standardize = (t) => {
+                    const { mean, variance } = tf.moments(t);
+                    return t.sub(mean).div(tf.sqrt(variance).add(1e-5));
+                };
 
-            images.push(tensor);
-            labels.push(i);
+                rawImages.push(tf.keep(standardize(decode)));
+                rawLabels.push(i);
+
+                // Augment signals only
+                if (CATEGORIES[i] !== 'noise') {
+                    const shiftL = decode.slice([0, 10, 0], [200, 190, 3]).resizeBilinear([200, 200]);
+                    rawImages.push(tf.keep(standardize(shiftL)));
+                    rawLabels.push(i);
+                }
+            });
         });
     }
 
-    const xs = tf.stack(images); 
+    // 2. Manual Shuffle
+    console.log("🎲 Mixing the data salad...");
+    const indices = Array.from(Array(rawImages.length).keys());
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
 
-    // 2. Ensure labels are a 1D tensor of integers
-    const ys = tf.oneHot(tf.tensor1d(labels, 'int32'), CATEGORIES.length);
-    
-    console.log("✅ Data Tensor Shape:", xs.shape);
+    const shuffledXs = tf.tidy(() => tf.stack(indices.map(idx => rawImages[idx])));
+    const shuffledYs = tf.tidy(() => tf.oneHot(tf.tensor1d(indices.map(idx => rawLabels[idx]), 'int32'), CATEGORIES.length));
 
-    // 2. Define Model
+    // Cleanup individual tensors
+    rawImages.forEach(t => t.dispose());
+
+    // 3. Build Model
     const model = tf.sequential();
-    model.add(tf.layers.conv2d({
-        inputShape: [IMAGE_SIZE, IMAGE_SIZE, 1],
-        filters: 32,
-        kernelSize: 3,
-        activation: 'relu'
-    }));
+    model.add(tf.layers.conv2d({ inputShape: [200, 200, 3], filters: 16, kernelSize: 5, activation: 'relu' }));
+    model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
+    model.add(tf.layers.conv2d({ filters: 32, kernelSize: 3, activation: 'relu' }));
     model.add(tf.layers.maxPooling2d({ poolSize: 2 }));
     model.add(tf.layers.flatten());
     model.add(tf.layers.dense({ units: 64, activation: 'relu' }));
-    model.add(tf.layers.dropout({ rate: 0.5 })); // Prevents memorizing backgrounds
+    model.add(tf.layers.dropout({ rate: 0.6 })); 
     model.add(tf.layers.dense({ units: CATEGORIES.length, activation: 'softmax' }));
 
+    const optimizer = tf.train.adam(0.0001); 
+
     model.compile({
-        optimizer: tf.train.adam(0.0001), // Lower learning rate for stability
+        optimizer: optimizer,
         loss: 'categoricalCrossentropy',
         metrics: ['accuracy']
     });
-
-    // 3. Train
-    await model.fit(xs, ys, {
-        epochs: EPOCHS,
-        batch_size: BATCH_SIZE,
+    
+    console.log(`🚀 Re-calibrating Model on ${shuffledXs.shape[0]} images...`);
+    
+    await model.fit(shuffledXs, shuffledYs, {
+        epochs: 50,           // 50 is the "sweet spot" for this data size
+        validationSplit: 0.2,
         shuffle: true,
+        // REFINED WEIGHTS: High enough to find curves, low enough to respect "Noise"
+        classWeight: { 
+            0: 1.0,  // Noise (The anchor)
+            1: 3.5,  // Strong Down
+            2: 5.0   // Week Down (Strong priority, but not a 'bully')
+        },
         callbacks: {
             onEpochEnd: (epoch, logs) => {
-                console.log(`Epoch ${epoch + 1}: Loss = ${logs.loss.toFixed(4)}, Acc = ${logs.acc.toFixed(4)}`);
+                console.log(`Epoch ${epoch+1}: Acc: ${logs.acc.toFixed(3)} | ValAcc: ${logs.val_acc.toFixed(3)}`);
             }
         }
     });
-
-    // 4. Save
-    await model.save(MODEL_SAVE_PATH);
-    console.log("✅ Model Saved! Run your prediction script now.");
+    if (!fs.existsSync('./models')) fs.mkdirSync('./models');
+    await model.save(`file://${SAVE_DIR}`);
+    console.log(`✅ Done! Model saved in ${SAVE_DIR}`);
 }
 
-train().catch(console.error);
+train().catch(err => console.error(err));
